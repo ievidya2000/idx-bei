@@ -1,0 +1,65 @@
+{
+  "totalRecordsAllTypes": 0,
+  "categories": {
+    "tanpaHmetd": {
+      "count": 0,
+      "data": []
+    },
+    "hmetd": {
+      "count": 0,
+      "data": []
+    },
+    "stockSplit": {
+      "count": 0,
+      "data": []
+    },
+    "reverseStock": {
+      "count": 0,
+      "data": []
+    },
+    "sahamBonus": {
+      "count": 0,
+      "data": []
+    },
+    "dividenSaham": {
+      "count": 0,
+      "data": []
+    },
+    "BuybackSaham": {
+      "count": 0,
+      "data": []
+    },
+    "PrivatePlacement": {
+      "count": 0,
+      "data": []
+    },
+    "ipo": {
+      "count": 0,
+      "data": []
+    },
+    "waran": {
+      "count": 0,
+      "data": []
+    },
+    "gabungUsaha": {
+      "count": 0,
+      "data": []
+    },
+    "kurangModal": {
+      "count": 0,
+      "data": []
+    },
+    "konversiSaham": {
+      "count": 0,
+      "data": []
+    },
+    "companyListing": {
+      "count": 0,
+      "data": []
+    },
+    "partialDelisting": {
+      "count": 0,
+      "data": []
+    }
+  }
+}
