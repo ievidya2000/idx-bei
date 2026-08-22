@@ -40,7 +40,7 @@ jobs:
       run: |
         git config --global user.name "GitHub Actions"
         git config --global user.email "actions@github.com"
-        git add data/
+        git add -f data/
         git diff --staged --quiet || git commit -m "Auto-update data $(date +'%Y-%m-%d')"
         git push
       env:
