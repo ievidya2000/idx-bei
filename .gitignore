@@ -61,4 +61,8 @@ Thumbs.db
 .claude/
 CLAUDE.md
 bin/
-graphify-out/
+graphify-out/.venv/
+.streamlit/secrets.toml
+*.log
+data/
+bin/
