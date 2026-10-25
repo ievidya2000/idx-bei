@@ -89,3 +89,12 @@ for p in glob.glob(f"{base}/index_summary/*.json"):
             "frequency": float(r.get("Frequency") or 0),
         })
 upsert("index_summary", rows)
+
+# --- Telegram notify ---
+if os.environ.get("TELEGRAM_BOT_TOKEN") and os.environ.get("TELEGRAM_CHAT_ID"):
+    try:
+        requests.post(f"https://api.telegram.org/bot{os.environ['TELEGRAM_BOT_TOKEN']}/sendMessage",
+                      data={"chat_id": os.environ["TELEGRAM_CHAT_ID"],
+                            "text": "✅ IDX-BEI Cloud Sync + Bridge complete"})
+    except Exception as e:
+        print(f"telegram notify failed: {e}")
