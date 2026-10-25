@@ -1,67 +1,21 @@
-name: IDX-BEI Cloud Sync
+name: IDX-BEI Intraday YF Sync
 on:
   schedule:
-    # WIB (UTC+7): 12:15 -> 05:15 UTC | 17:15 -> 10:15 UTC | 22:15 -> 15:15 UTC
-    - cron: '15 5,10,15 * * 1-5'
+    # 12:15 WIB -> 05:15 UTC | 17:15 WIB -> 10:15 UTC
+    - cron: '15 5,10 * * 1-5'
   workflow_dispatch:
 
 jobs:
-  sync-and-push:
+  yf-sync:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Setup Go
-        uses: actions/setup-go@v5
+      - uses: actions/setup-python@v5
         with:
-          go-version: '1.22'
-
-      - name: Install & Connect Cloudflare WARP (Headless Fix)
-        run: |
-          # 1. Install WARP
-          curl -fsSL https://pkg.cloudflareclient.com/pubkey.gpg | sudo gpg --yes --dearmor --output /usr/share/keyrings/cloudflare-warp-archive-keyring.gpg
-          echo "deb [signed-by=/usr/share/keyrings/cloudflare-warp-archive-keyring.gpg] https://pkg.cloudflareclient.com/ $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/cloudflare-client.list
-          sudo apt-get update && sudo apt-get install -y cloudflare-warp
-          
-          # 2. Fix the Permission Denied error by using sudo
-          sudo mkdir -p /root/.local/share/warp
-          sudo sh -c "echo -n 'yes' > /root/.local/share/warp/accepted-tos.txt"
-          
-          # 3. Kill any zombie services
-          sudo systemctl stop warp-svc || true
-          sudo pkill -f warp-svc || true
-          sleep 2
-          
-          # 4. Start the daemon manually in the background
-          sudo warp-svc > /var/log/warp-svc.log 2>&1 &
-          sleep 5 # Wait for the daemon to be ready
-          
-          # 5. Register, set mode, and connect using sudo
-          sudo warp-cli --accept-tos registration new
-          sudo warp-cli --accept-tos mode warp
-          sudo warp-cli --accept-tos connect
-          sleep 5 # Wait for connection
-          
-          # 6. Verify it works
-          curl -s https://www.cloudflare.com/cdn-cgi/trace | grep warp
-
-      - name: Build & Run IDX Sync
-        run: |
-          go build -ldflags="-s -w" -o bin/idx-sync-linux ./cmd/idx-sync
-          ./bin/idx-sync-linux -data-dir ./data -delay 1.5 -retries 3
-
-      - name: Install DuckDB
-        run: |
-          wget -q https://github.com/duckdb/duckdb/releases/download/v1.1.3/duckdb_cli-linux-amd64.zip
-          unzip -q duckdb_cli-linux-amd64.zip
-          sudo mv duckdb /usr/local/bin/
-
-      - name: Push to Supabase & Send Telegram HTML
+          python-version: '3.12'
+      - run: pip install requests pandas yfinance
+      - name: Run YF Batch
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: |
-          pip install requests pandas
-          python scripts/parquet_to_supabase.py
+        run: python scripts/yfinance_batch.py
