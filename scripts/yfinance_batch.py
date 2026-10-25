@@ -37,6 +37,8 @@ for i in range(0, len(tickers), 50):
                     "change": float(latest["Close"] - latest["Open"]),
                     "value": float(latest["Volume"] * latest["Close"]),
                     "previous": float(latest["Open"]),
+                    "foreign_buy": 0.0,
+                    "foreign_sell": 0.0,
                 })
         except Exception:
             continue
