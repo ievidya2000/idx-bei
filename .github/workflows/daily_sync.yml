@@ -23,26 +23,26 @@ jobs:
           echo "deb [signed-by=/usr/share/keyrings/cloudflare-warp-archive-keyring.gpg] https://pkg.cloudflareclient.com/ $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/cloudflare-client.list
           sudo apt-get update && sudo apt-get install -y cloudflare-warp
           
-          # 2. Kill any zombie services that might be locking the socket
+          # 2. Fix the Permission Denied error by using sudo
+          sudo mkdir -p /root/.local/share/warp
+          sudo sh -c "echo -n 'yes' > /root/.local/share/warp/accepted-tos.txt"
+          
+          # 3. Kill any zombie services
           sudo systemctl stop warp-svc || true
           sudo pkill -f warp-svc || true
           sleep 2
-          
-          # 3. Pre-accept the TOS to avoid the prompt
-          mkdir -p /root/.local/share/warp
-          echo -n 'yes' > /root/.local/share/warp/accepted-tos.txt
           
           # 4. Start the daemon manually in the background
           sudo warp-svc > /var/log/warp-svc.log 2>&1 &
           sleep 5 # Wait for the daemon to be ready
           
-          # 5. Register, set mode, and connect
-          warp-cli --accept-tos registration new
-          warp-cli --accept-tos mode warp
-          warp-cli --accept-tos connect
+          # 5. Register, set mode, and connect using sudo
+          sudo warp-cli --accept-tos registration new
+          sudo warp-cli --accept-tos mode warp
+          sudo warp-cli --accept-tos connect
           sleep 5 # Wait for connection
           
-          # 6. Verify it works (Should show warp=on)
+          # 6. Verify it works
           curl -s https://www.cloudflare.com/cdn-cgi/trace | grep warp
 
       - name: Build & Run IDX Sync
