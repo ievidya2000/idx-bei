@@ -16,25 +16,34 @@ jobs:
         with:
           go-version: '1.22'
 
-      - name: Install & Connect Cloudflare WARP (Bypass IDX 403)
+      - name: Install & Connect Cloudflare WARP (Headless Fix)
         run: |
           # 1. Install WARP
           curl -fsSL https://pkg.cloudflareclient.com/pubkey.gpg | sudo gpg --yes --dearmor --output /usr/share/keyrings/cloudflare-warp-archive-keyring.gpg
           echo "deb [signed-by=/usr/share/keyrings/cloudflare-warp-archive-keyring.gpg] https://pkg.cloudflareclient.com/ $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/cloudflare-client.list
           sudo apt-get update && sudo apt-get install -y cloudflare-warp
           
-          # 2. Start the WARP daemon (required for CLI commands to work)
-          sudo warp-svc --accept-tos &
-          sleep 5 # Wait for daemon to initialize
+          # 2. Kill any zombie services that might be locking the socket
+          sudo systemctl stop warp-svc || true
+          sudo pkill -f warp-svc || true
+          sleep 2
           
-          # 3. Register, set mode, and connect (with TOS accepted)
+          # 3. Pre-accept the TOS to avoid the prompt
+          mkdir -p /root/.local/share/warp
+          echo -n 'yes' > /root/.local/share/warp/accepted-tos.txt
+          
+          # 4. Start the daemon manually in the background
+          sudo warp-svc > /var/log/warp-svc.log 2>&1 &
+          sleep 5 # Wait for the daemon to be ready
+          
+          # 5. Register, set mode, and connect
           warp-cli --accept-tos registration new
           warp-cli --accept-tos mode warp
           warp-cli --accept-tos connect
-          sleep 5 # Wait for connection to establish
+          sleep 5 # Wait for connection
           
-          # 4. Verify connection is active
-          warp-cli status
+          # 6. Verify it works (Should show warp=on)
+          curl -s https://www.cloudflare.com/cdn-cgi/trace | grep warp
 
       - name: Build & Run IDX Sync
         run: |
